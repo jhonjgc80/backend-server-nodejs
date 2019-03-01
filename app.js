@@ -29,7 +29,11 @@ app.use(express.urlencoded({ extended: false }));
 let appRoutes = require('./routes/app.routes');
 let usuarioRoutes = require('./routes/usuario.routes');
 let loginRoutes = require('./routes/login.routes');
-
+let hospitalRoutes = require('./routes/hospital.routes');
+let medicoRoutes = require('./routes/medico.routes');
+let busquedaRoutes = require('./routes/busqueda.routes');
+let uploadRoutes = require('./routes/upload.routes');
+let imagenRoutes = require('./routes/imagenes.routes');
 
 //==========================================
 //  settings, configuraciones del servidor
@@ -50,7 +54,14 @@ mongoose.connect('mongodb://localhost/hospitalDB', { useNewUrlParser: true }, (e
 //==========================================
 app.use('/usuario', usuarioRoutes);
 app.use('/login', loginRoutes);
+app.use('/hospital', hospitalRoutes);
+app.use('/medico', medicoRoutes)
+app.use('/busqueda', busquedaRoutes);
+app.use('/upload', uploadRoutes);
+app.use('/imagen', imagenRoutes);
 app.use('/', appRoutes);
+
+
 
 
 app.listen(app.get('port'), () =>{

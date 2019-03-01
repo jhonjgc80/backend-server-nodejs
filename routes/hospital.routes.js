@@ -1,64 +1,57 @@
 const express = require('express');
-const bcrypt = require('bcrypt');
 const _ = require('underscore');
 const { verificaToken } = require('../middlewares/autenticacion');
 
 
-
-
 const app = express();
 
-//importammos el modelo de usuario
-const Usuario = require('../models/usuario');
+
+const Hospital = require('../models/hospital');
 
 //==========================================
 // Peticion para obtener todos los registros
 //==========================================
 app.get('/', (req,res,next) => {
-
     let desde = req.query.desde || 0;
     desde = Number(desde);
 
-    Usuario.find({}, '-password')
+    Hospital.find({})
     .skip(desde)
     .limit(5)
-    .exec((err, usuarios, ) =>{
+    .populate('usuario', 'nombre email')
+    .exec((err, hospitales ) =>{
         if(err){
             return res.status(500).json({
                 ok: false,
-                mensaje: 'Error cargando usuarios',
+                mensaje: 'Error cargando hospitales',
                 errors: err
             });
         }
-        Usuario.count({}, (err, conteo)=>{
-            res.status(200).json({ ok: true, usuarios, total: conteo});
-        })
-        
+        Hospital.countDocuments({}, (err, conteo)=>{
+            res.status(200).json({ ok: true, hospitales, total: conteo});
+        });
     });
 });
 
 //==========================================
 // Peticion para crear nuevos registros
 //==========================================
-app.post('/', [verificaToken] ,(req, res)=>{
+app.post('/', verificaToken ,(req, res)=>{
     let body = req.body;
-    let usuario = new Usuario({
+    let hospital = new Hospital({
         nombre: body.nombre,
-        email: body.email,
-        password: bcrypt.hashSync(body.password, 10),
-        img: body.img,
-        role: body.role
+        //img: body.img,
+        usuario: req.usuario._id
     });
-
-    usuario.save((err, usuarioDB)=>{
+    hospital.save((err, hospitalDB)=>{
         if(err){
             return res.status(400).json({
                 ok: false,
-                mensaje: 'Error guardando usuario',
+                mensaje: 'Error guardando hospital',
                 errors: err
             });
         }
-        res.status(201).json({ ok: true, usuario: usuarioDB});
+        res.status(201).json({ ok: true, hospital: hospitalDB});
     });
 });
 
@@ -70,34 +63,22 @@ app.put('/:id', verificaToken, (req, res)=>{
     let body = req.body;
     //let body = _.pick(req.body, ['nombre', 'email', 'img', 'role']);
 
-    Usuario.findOneAndUpdate(id, body, {new: true},(err, usuarioDB)=>{
+    Hospital.findByIdAndUpdate(id, {nombre: body.nombre , usuario: req.usuario._id}, {new: true},(err, hospitalDB)=>{
         if(err){
             return res.status(500).json({
                 ok: false,
-                mensaje: 'Error al buscar usuario',
+                mensaje: 'Error al buscar hospital',
                 errors: err
             });
         }
-        if(!usuarioDB){
+        if(hospitalDB.nombre === null){
             return res.status(400).json({
                 ok: false,
-                mensaje: `El usuario con el id ${id} no existe`,
-                errors: {message: `No existe el usuario con id: ${id}`}
+                mensaje: `El hospital con el id ${id} no existe`,
+                errors: {message: `No existe el hospital con id: ${id}`}
             });
         }
-        usuarioDB.password = ':)';
-        res.status(200).json({ ok: true, usuario: usuarioDB});
-
-        // usuario.save((err, usuarioDB)=>{
-        //     if(err){
-        //         return res.status(400).json({
-        //             ok: false,
-        //             mensaje: 'Error al actualizar usuario',
-        //             errors: err
-        //         });
-        //     }
-        //   res.status(200).json({ ok: true, usuario: usuarioDB});
-        // });
+        res.status(200).json({ ok: true, hospital: hospitalDB});
     });
 });
 
@@ -107,14 +88,16 @@ app.put('/:id', verificaToken, (req, res)=>{
 app.delete('/:id', verificaToken, (req, res)=>{
     let id = req.params.id;
 
-    Usuario.findByIdAndRemove(id, (err, usuarioBorrado)=>{
-        if(err || !usuarioBorrado){
+    Hospital.findByIdAndRemove(id, (err, hospitalBorrado)=>{
+        if(err || !hospitalBorrado){
             return res.status(400).json({
                 ok: false,
-                err:{ message: 'Usuario no encontrado!'}
+                err:{ message: 'Hospital no encontrado!'}
             });
         }
-        res.status(200).json({ ok: true, usuario: usuarioBorrado});
+        res.status(200).json({ ok: true, hospital: hospitalBorrado});
     });
 });
+
+
 module.exports = app;

@@ -19,4 +19,4 @@ let usuarioSchema = new Schema({
 
 usuarioSchema.plugin(uniqueValidator, {message: 'El {PATH} ya existe!!!'});
 
-module.exports = mongoose.model('usuario', usuarioSchema);
+module.exports = mongoose.model('Usuario', usuarioSchema);
